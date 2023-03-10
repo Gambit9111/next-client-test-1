@@ -1,11 +1,113 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
+import Head from "next/head";
+import io from "socket.io-client";
+import { useEffect, useState } from "react";
+import { encrypt_message, decrypt_message } from "@/ClientEncrypt";
 
-const inter = Inter({ subsets: ['latin'] })
+const socket = io.connect(process.env.NEXT_PUBLIC_IP);
 
 export default function Home() {
+  const [message, setMessage] = useState("");
+  const [encryptedMessageReceived, setEncryptedMessageReceived] = useState("");
+  const [messageReceived, setMessageReceived] = useState("");
+
+  const sendMessage = async () => {
+    const encrypted = encrypt_message(message);
+    console.log(
+      "1st encryption on the client, sending to server: " + encrypted
+    );
+    // send a post request to the server
+    const res = await fetch("/api/encrypt", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message: encrypted }),
+    });
+    const data = await res.json();
+    console.log("2nd encryption received from the server: " + data.message);
+    socket.emit("send_message", { message: data.message });
+    setMessage("");
+  };
+
+  // const sendMessage = () => {
+  // encryptMessage();
+  // console.log(encryptedMessage, "encrypted message");
+  // socket.emit("send_message", { message: encryptedMessage });
+  // setMessage("");
+
+  // socket.emit("send_message", { message: encrypt_message(message) });
+  // setMessage("");
+  // console.log("unencrypted message (unencrypted): " + message);
+  // setEncryptedMessage(encrypt_message(message));
+  // console.log("encrypted message 1 (encrypted): " + encryptedMessage);
+  // const encrypted = encrypt_message(message);
+  // console.log(
+  //   "1st encryption on the client, sending to server: " + encrypted
+  // );
+  // // send a post request to the server
+  // fetch("/api/encrypt", {
+  //   method: "POST",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //   },
+  //   body: JSON.stringify({ message: encrypted }),
+  // }).then((res) => {
+  //   res
+  //     .json()
+  //     .then(
+  //       (data) => (
+  //         setEncryptedMessage(data.message),
+  //         console.log(
+  //           "2nd encryption received from the server: " + data.message
+  //         )
+  //       )
+  //     );
+  // });
+  // socket.emit("send_message", { message: encryptedMessage });
+  // setMessage("");
+  // };
+
+  // console.log("Sending encrypted to the socket server: " + encryptedMessage);
+
+  // useEffect(() => {
+  //   socket.emit("send_message", { message: encryptedMessage });
+  //   setMessage("");
+  //   console.log("is this working?");
+  // }, [encryptedMessage]);
+
+  useEffect(() => {
+    socket.on("receive_message", (data) => {
+      // const decrypted = decrypt_message(data.message);
+      setEncryptedMessageReceived(data.message);
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    if (encryptedMessageReceived) {
+      console.log(encryptedMessageReceived, "encrypted message received");
+      // const decrypted = decrypt_message(encryptedMessageReceived);
+      // setMessageReceived(decrypted);
+      decryptMessage();
+    }
+  }, [encryptedMessageReceived]);
+
+  const decryptMessage = async () => {
+    const res = await fetch("/api/decrypt", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message: encryptedMessageReceived }),
+    });
+    const data = await res.json();
+    console.log("decrypted message received from the server: " + data.message);
+
+    console.log(
+      "decrypted message on the client: " + decrypt_message(data.message)
+    );
+    setMessageReceived(decrypt_message(data.message));
+  };
+
   return (
     <>
       <Head>
@@ -14,110 +116,18 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={styles.main}>
-        <div className={styles.description}>
-          <p>
-            Get started by editing&nbsp;
-            <code className={styles.code}>src/pages/index.tsx</code>
-          </p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-                priority
-              />
-            </a>
-          </div>
-        </div>
-
-        <div className={styles.center}>
-          <Image
-            className={styles.logo}
-            src="/next.svg"
-            alt="Next.js Logo"
-            width={180}
-            height={37}
-            priority
-          />
-          <div className={styles.thirteen}>
-            <Image
-              src="/thirteen.svg"
-              alt="13"
-              width={40}
-              height={31}
-              priority
-            />
-          </div>
-        </div>
-
-        <div className={styles.grid}>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Docs <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Find in-depth information about Next.js features and&nbsp;API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Learn <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Learn about Next.js in an interactive course with&nbsp;quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Templates <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Discover and deploy boilerplate example Next.js&nbsp;projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Deploy <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Instantly deploy your Next.js site to a shareable URL
-              with&nbsp;Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
+      <div>
+        <input
+          placeholder="Message..."
+          onChange={(event) => {
+            setMessage(event.target.value);
+          }}
+          value={message}
+        />
+        <button onClick={sendMessage}>Send Message</button>
+        <h1>Message:</h1>
+        {messageReceived}
+      </div>
     </>
-  )
+  );
 }
