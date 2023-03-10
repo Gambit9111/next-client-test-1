@@ -23,8 +23,10 @@ export default function Home() {
       },
       body: JSON.stringify({ message: encrypted }),
     });
-    const data: any = await res.json();
+    const data = await res.json();
+    // @ts-ignore
     console.log("2nd encryption received from the server: " + data.message);
+    // @ts-ignore
     socket.emit("send_message", { message: data.message });
     setMessage("");
   };
@@ -100,11 +102,14 @@ export default function Home() {
       body: JSON.stringify({ message: encryptedMessageReceived }),
     });
     const data = await res.json();
+    // @ts-ignore
     console.log("decrypted message received from the server: " + data.message);
 
     console.log(
+      // @ts-ignore
       "decrypted message on the client: " + decrypt_message(data.message)
     );
+    // @ts-ignore
     setMessageReceived(decrypt_message(data.message));
   };
 
