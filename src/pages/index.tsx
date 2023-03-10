@@ -23,7 +23,7 @@ export default function Home() {
       },
       body: JSON.stringify({ message: encrypted }),
     });
-    const data = await res.json();
+    const data: any = await res.json();
     console.log("2nd encryption received from the server: " + data.message);
     socket.emit("send_message", { message: data.message });
     setMessage("");
