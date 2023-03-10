@@ -1,9 +1,9 @@
 import Head from "next/head";
-import io from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 import { useEffect, useState } from "react";
 import { encrypt_message, decrypt_message } from "@/ClientEncrypt";
 
-const socket = io.connect(process.env.NEXT_PUBLIC_IP);
+const socket: Socket = io(process.env.NEXT_PUBLIC_IP);
 
 export default function Home() {
   const [message, setMessage] = useState("");
